@@ -1,6 +1,6 @@
 # aisdk/google-agent-platform
 
-Official Google Cloud Agent Platform provider for the framework-agnostic PHP AI SDK. It uses the OpenAI-compatible endpoint for text and native publisher model endpoints for image and speech generation.
+Official Google Cloud Agent Platform provider for the framework-agnostic PHP AI SDK. It uses the OpenAI-compatible endpoint for text and native publisher model endpoints for embeddings, image, and speech generation.
 
 ## Installation
 
@@ -22,6 +22,23 @@ $result = Generate::text()
 echo $result->text;
 ```
 
+## Embeddings
+
+```php
+$embedding = Generate::embedding(['First document to index', 'Second document to index'])
+    ->model(GoogleAgentPlatform::embedding('gemini-embedding-001'))
+    ->dimensions(768)
+    ->providerOptions('google-agent-platform', [
+        'task_type' => 'RETRIEVAL_DOCUMENT',
+        'autoTruncate' => false,
+    ])
+    ->run();
+
+$vector = $embedding->output->vector;
+```
+
+The package sends one native publisher-model request per input, which supports the documented single-input limit of `gemini-embedding-001`. Provider options use Google's documented field names: `task_type`, `title`, `autoTruncate`, and `outputDimensionality`.
+
 Publisher and routed model IDs pass through unchanged and do not need to be registered. This package does not ship a model inventory; the SDK performs internal adapter validation before Google Cloud validates support for the selected model, project, and location.
 
 ## Image and speech generation
@@ -38,7 +55,7 @@ $speech = Generate::speech('Welcome to the application.')
     ->run();
 ```
 
-Native image and speech generation require `project`; a custom OpenAI-compatible `baseUrl` alone is not enough to construct the publisher model endpoint.
+Native embedding, image, and speech generation require `project`; a custom OpenAI-compatible `baseUrl` alone is not enough to construct the publisher model endpoint.
 
 ## Streaming
 
@@ -98,3 +115,8 @@ GoogleAgentPlatform::create(['project' => 'my-project', 'accessToken' => 'ya29..
 ```bash
 composer test
 ```
+
+## Links
+
+- [Google Cloud text embeddings](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/embeddings/get-text-embeddings)
+- [Core Package](https://github.com/phpaisdk/core)

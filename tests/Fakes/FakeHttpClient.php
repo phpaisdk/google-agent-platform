@@ -13,6 +13,9 @@ final class FakeHttpClient implements ClientInterface
 {
     public ?RequestInterface $lastRequest = null;
 
+    /** @var array<int, RequestInterface> */
+    public array $requests = [];
+
     public function __construct(
         private readonly int $status,
         private readonly string $body,
@@ -22,6 +25,7 @@ final class FakeHttpClient implements ClientInterface
     public function sendRequest(RequestInterface $request): ResponseInterface
     {
         $this->lastRequest = $request;
+        $this->requests[] = $request;
 
         return new Response($this->status, ['Content-Type' => $this->contentType], $this->body);
     }

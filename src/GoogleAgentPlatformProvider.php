@@ -5,17 +5,20 @@ declare(strict_types=1);
 namespace AiSdk\GoogleAgentPlatform;
 
 use AiSdk\Contracts\BaseProvider;
+use AiSdk\Contracts\EmbeddingModelInterface;
+use AiSdk\Contracts\EmbeddingProviderInterface;
 use AiSdk\Contracts\ImageModelInterface;
 use AiSdk\Contracts\ImageProviderInterface;
 use AiSdk\Contracts\SpeechModelInterface;
 use AiSdk\Contracts\SpeechProviderInterface;
 use AiSdk\Contracts\TextModelInterface;
 use AiSdk\Contracts\TextProviderInterface;
+use AiSdk\GoogleAgentPlatform\Models\GoogleAgentPlatformEmbeddingModel;
 use AiSdk\GoogleAgentPlatform\Models\GoogleAgentPlatformImageModel;
 use AiSdk\GoogleAgentPlatform\Models\GoogleAgentPlatformSpeechModel;
 use AiSdk\GoogleAgentPlatform\Models\GoogleAgentPlatformTextModel;
 
-final class GoogleAgentPlatformProvider extends BaseProvider implements ImageProviderInterface, SpeechProviderInterface, TextProviderInterface
+final class GoogleAgentPlatformProvider extends BaseProvider implements EmbeddingProviderInterface, ImageProviderInterface, SpeechProviderInterface, TextProviderInterface
 {
     public function __construct(public readonly GoogleAgentPlatformOptions $options) {}
 
@@ -27,6 +30,11 @@ final class GoogleAgentPlatformProvider extends BaseProvider implements ImagePro
     public function textModel(string $modelId): TextModelInterface
     {
         return new GoogleAgentPlatformTextModel($modelId, $this->options);
+    }
+
+    public function embeddingModel(string $modelId): EmbeddingModelInterface
+    {
+        return new GoogleAgentPlatformEmbeddingModel($modelId, $this->options);
     }
 
     public function imageModel(string $modelId): ImageModelInterface

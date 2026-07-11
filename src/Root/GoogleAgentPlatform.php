@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace AiSdk;
 
+use AiSdk\Contracts\EmbeddingModelInterface;
 use AiSdk\Contracts\ImageModelInterface;
 use AiSdk\Contracts\SpeechModelInterface;
 use AiSdk\Contracts\TextModelInterface;
@@ -35,6 +36,11 @@ final class GoogleAgentPlatform
     public static function model(string $modelId): TextModelInterface
     {
         return self::default()->textModel($modelId);
+    }
+
+    public static function embedding(string $modelId): EmbeddingModelInterface
+    {
+        return self::default()->embeddingModel($modelId);
     }
 
     public static function image(string $modelId): ImageModelInterface
