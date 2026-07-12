@@ -13,12 +13,15 @@ use AiSdk\Contracts\SpeechModelInterface;
 use AiSdk\Contracts\SpeechProviderInterface;
 use AiSdk\Contracts\TextModelInterface;
 use AiSdk\Contracts\TextProviderInterface;
+use AiSdk\Contracts\VideoModelInterface;
+use AiSdk\Contracts\VideoProviderInterface;
 use AiSdk\GoogleAgentPlatform\Models\GoogleAgentPlatformEmbeddingModel;
 use AiSdk\GoogleAgentPlatform\Models\GoogleAgentPlatformImageModel;
 use AiSdk\GoogleAgentPlatform\Models\GoogleAgentPlatformSpeechModel;
 use AiSdk\GoogleAgentPlatform\Models\GoogleAgentPlatformTextModel;
+use AiSdk\GoogleAgentPlatform\Models\GoogleAgentPlatformVideoModel;
 
-final class GoogleAgentPlatformProvider extends BaseProvider implements EmbeddingProviderInterface, ImageProviderInterface, SpeechProviderInterface, TextProviderInterface
+final class GoogleAgentPlatformProvider extends BaseProvider implements EmbeddingProviderInterface, ImageProviderInterface, SpeechProviderInterface, TextProviderInterface, VideoProviderInterface
 {
     public function __construct(public readonly GoogleAgentPlatformOptions $options) {}
 
@@ -45,5 +48,9 @@ final class GoogleAgentPlatformProvider extends BaseProvider implements Embeddin
     public function speechModel(string $modelId): SpeechModelInterface
     {
         return new GoogleAgentPlatformSpeechModel($modelId, $this->options);
+    }
+    public function videoModel(string $modelId): VideoModelInterface
+    {
+        return new GoogleAgentPlatformVideoModel($modelId, $this->options);
     }
 }

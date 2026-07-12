@@ -59,6 +59,18 @@ Native embedding, image, and speech generation require `project`; a custom OpenA
 
 ## Streaming
 
+## Video Generation
+
+```php
+$result = Generate::video('A cinematic ocean scene')
+    ->model(GoogleAgentPlatform::video('veo-3.1-generate-001'))
+    ->aspectRatio('16:9')
+    ->resolution('1920x1080')
+    ->run(timeout: 600);
+```
+
+Veo operations use the native publisher-model endpoint and can return inline video bytes or a Cloud Storage URI.
+
 ```php
 foreach (Generate::text('Tell me a story.')->model(GoogleAgentPlatform::model('google/gemini-2.5-flash'))->stream()->chunks() as $chunk) {
     echo $chunk;

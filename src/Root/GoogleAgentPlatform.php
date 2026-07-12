@@ -8,6 +8,7 @@ use AiSdk\Contracts\EmbeddingModelInterface;
 use AiSdk\Contracts\ImageModelInterface;
 use AiSdk\Contracts\SpeechModelInterface;
 use AiSdk\Contracts\TextModelInterface;
+use AiSdk\Contracts\VideoModelInterface;
 use AiSdk\GoogleAgentPlatform\GoogleAgentPlatformOptions;
 use AiSdk\GoogleAgentPlatform\GoogleAgentPlatformProvider;
 
@@ -51,5 +52,9 @@ final class GoogleAgentPlatform
     public static function speech(string $modelId): SpeechModelInterface
     {
         return self::default()->speechModel($modelId);
+    }
+    public static function video(string $modelId): VideoModelInterface
+    {
+        return self::default()->videoModel($modelId);
     }
 }
