@@ -78,6 +78,9 @@ final class GoogleAuth
         }
 
         $expiresAt = is_array($token) && isset($token['expires_at']) ? (int) $token['expires_at'] : 0;
+        if ($expiresAt === 0 && is_array($token) && isset($token['expires_in'])) {
+            $expiresAt = time() + (int) $token['expires_in'];
+        }
         $this->cachedToken = $accessToken;
         $this->expiresAt = $expiresAt > 0 ? $expiresAt : time() + 3600;
 

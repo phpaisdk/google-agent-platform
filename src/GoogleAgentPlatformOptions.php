@@ -59,12 +59,12 @@ final class GoogleAgentPlatformOptions
         $project = Env::loadOptionalSetting(
             isset($config['project']) ? (string) $config['project'] : null,
             'GOOGLE_VERTEX_PROJECT',
-        );
+        ) ?? Env::loadOptionalSetting(null, 'GOOGLE_CLOUD_PROJECT');
 
         $location = Env::loadOptionalSetting(
             isset($config['location']) ? (string) $config['location'] : null,
             'GOOGLE_VERTEX_LOCATION',
-        );
+        ) ?? Env::loadOptionalSetting(null, 'GOOGLE_CLOUD_LOCATION');
 
         $explicitBase = Env::loadOptionalSetting(
             isset($config['baseUrl']) ? (string) $config['baseUrl'] : null,

@@ -60,3 +60,19 @@ it('generates speech through the native publisher model endpoint', function () {
         ->and($client->sentBody()['generationConfig']['responseModalities'])->toBe(['AUDIO'])
         ->and($client->sentBody()['generationConfig']['speechConfig']['voiceConfig']['prebuiltVoiceConfig']['voiceName'])->toBe('Kore');
 });
+
+it('maps portable 4K image sizes to the documented Google value', function () {
+    $client = new FakeHttpClient(200, json_encode([
+        'candidates' => [['content' => ['parts' => [[
+            'inlineData' => ['data' => base64_encode('image-bytes'), 'mimeType' => 'image/png'],
+        ]]]]],
+    ]));
+    configureGapMediaWith($client);
+
+    Generate::image('A detailed landscape')
+        ->model(GoogleAgentPlatform::image('google/gemini-3.1-flash-image'))
+        ->size('4096x4096')
+        ->run();
+
+    expect($client->sentBody()['generationConfig']['imageConfig']['imageSize'])->toBe('4K');
+});

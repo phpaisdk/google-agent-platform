@@ -75,3 +75,58 @@ it('accepts opaque model ids', function () {
 
     expect(GoogleAgentPlatform::model('publisher/future-private-model')->modelId())->toBe('publisher/future-private-model');
 });
+
+it('maps portable reasoning onto Google thinking config', function () {
+    $client = new FakeHttpClient(200, json_encode([
+        'choices' => [['message' => ['content' => 'Done'], 'finish_reason' => 'stop']],
+    ]));
+    configureGapWith($client);
+    GoogleAgentPlatform::create(['project' => 'my-project', 'accessToken' => 'ya29.test']);
+
+    Generate::text('Think')
+        ->model(GoogleAgentPlatform::model('google/gemini-3.1-pro-preview'))
+        ->reasoning(\AiSdk\Reasoning::effort('medium'))
+        ->run();
+
+    expect($client->sentBody()['extra_body']['google']['thinking_config'])->toBe([
+        'thinking_level' => 'MEDIUM',
+    ])->and($client->sentBody())->not->toHaveKey('reasoning_effort');
+});
+
+it('maps portable reasoning budgets and preserves explicit Google overrides', function () {
+    $client = new FakeHttpClient(200, json_encode([
+        'choices' => [['message' => ['content' => 'Done'], 'finish_reason' => 'stop']],
+    ]));
+    configureGapWith($client);
+    GoogleAgentPlatform::create(['project' => 'my-project', 'accessToken' => 'ya29.test']);
+
+    Generate::text('Think')
+        ->model(GoogleAgentPlatform::model('google/gemini-2.5-flash'))
+        ->reasoning(\AiSdk\Reasoning::budget(2048))
+        ->providerOptions('google-agent-platform', [
+            'extra_body' => ['google' => ['thinking_config' => ['thinking_budget' => 4096]]],
+        ])
+        ->run();
+
+    expect($client->sentBody()['extra_body']['google']['thinking_config'])->toBe([
+        'thinking_budget' => 4096,
+    ]);
+});
+
+it('uses Google MIME-style audio input formats', function () {
+    $client = new FakeHttpClient(200, json_encode([
+        'choices' => [['message' => ['content' => 'Done'], 'finish_reason' => 'stop']],
+    ]));
+    configureGapWith($client);
+    GoogleAgentPlatform::create(['project' => 'my-project', 'accessToken' => 'ya29.test']);
+
+    Generate::text()
+        ->model(GoogleAgentPlatform::model('google/gemini-2.5-flash'))
+        ->messages([\AiSdk\Message::user([
+            \AiSdk\Content::text('Describe this audio'),
+            \AiSdk\Content::audio('UklGRg==', mimeType: 'audio/wav', encoding: \AiSdk\InputEncoding::Base64),
+        ])])
+        ->run();
+
+    expect($client->sentBody()['messages'][0]['content'][1]['input_audio']['format'])->toBe('audio/wav');
+});

@@ -65,12 +65,25 @@ foreach (Generate::text('Tell me a story.')->model(GoogleAgentPlatform::model('g
 }
 ```
 
+## Reasoning and multimodal input
+
+Portable reasoning maps to Google's native thinking configuration. Effort levels become `thinking_level`, while token budgets become `thinking_budget`:
+
+```php
+$result = Generate::text('Explain the tradeoff.')
+    ->model(GoogleAgentPlatform::model('google/gemini-3.1-pro-preview'))
+    ->reasoning(\AiSdk\Reasoning::effort('medium'))
+    ->run();
+```
+
+Google-specific `extra_body.google.thinking_config` provider options take precedence when supplied explicitly. Text requests also accept documented image and audio inputs; audio formats are serialized using Google's MIME-style values such as `audio/wav`.
+
 ## Configuration
 
 | Variable | Description |
 |---|---|
-| `GOOGLE_VERTEX_PROJECT` | Google Cloud project id (required unless `baseUrl` set) |
-| `GOOGLE_VERTEX_LOCATION` | Region (defaults to `global`) |
+| `GOOGLE_CLOUD_PROJECT` / `GOOGLE_VERTEX_PROJECT` | Google Cloud project id (required unless `baseUrl` set) |
+| `GOOGLE_CLOUD_LOCATION` / `GOOGLE_VERTEX_LOCATION` | Region (defaults to `global`) |
 | `GOOGLE_VERTEX_ACCESS_TOKEN` | Static OAuth access token |
 | `GOOGLE_VERTEX_CREDENTIALS_PATH` | Path to a service account JSON key |
 | `GOOGLE_APPLICATION_CREDENTIALS` | Standard ADC service-account path |
@@ -119,4 +132,6 @@ composer test
 ## Links
 
 - [Google Cloud text embeddings](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/embeddings/get-text-embeddings)
+- [Google Cloud OpenAI-compatible examples](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/migrate/openai/examples)
+- [Google Cloud thinking](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/thinking)
 - [Core Package](https://github.com/phpaisdk/core)

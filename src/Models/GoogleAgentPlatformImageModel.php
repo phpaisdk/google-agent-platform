@@ -93,7 +93,13 @@ final class GoogleAgentPlatformImageModel extends BaseModel implements ImageMode
             throw new InvalidArgumentException("Invalid Google image size [{$size}]. Expected WIDTHxHEIGHT.");
         }
 
-        return max((int) $matches[1], (int) $matches[2]) > 1024 ? '2K' : '1K';
+        $longestEdge = max((int) $matches[1], (int) $matches[2]);
+
+        return match (true) {
+            $longestEdge > 2048 => '4K',
+            $longestEdge > 1024 => '2K',
+            default => '1K',
+        };
     }
 
     /**
