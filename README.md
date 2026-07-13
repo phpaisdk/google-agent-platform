@@ -1,6 +1,6 @@
 # aisdk/google-agent-platform
 
-Official Google Cloud Agent Platform provider for the framework-agnostic PHP AI SDK. It uses the OpenAI-compatible endpoint for text and native publisher model endpoints for embeddings, image, and speech generation.
+Official Google Cloud Agent Platform provider for the framework-agnostic PHP AI SDK. It uses the OpenAI-compatible endpoint for text and transcription, and native publisher model endpoints for embeddings, image, and speech generation.
 
 ## Installation
 
@@ -56,6 +56,22 @@ $speech = Generate::speech('Welcome to the application.')
 ```
 
 Native embedding, image, and speech generation require `project`; a custom OpenAI-compatible `baseUrl` alone is not enough to construct the publisher model endpoint.
+
+## Transcription
+
+```php
+use AiSdk\Content;
+use AiSdk\Generate;
+use AiSdk\GoogleAgentPlatform;
+
+$result = Generate::transcription(Content::audio(__DIR__.'/meeting.mp3'))
+    ->model(GoogleAgentPlatform::transcription('google/gemini-2.5-flash'))
+    ->run();
+
+echo $result->output->text;
+```
+
+Transcription uses the routed multimodal model endpoint, so it follows the same authentication and model-id rules as text generation.
 
 ## Streaming
 
@@ -146,4 +162,5 @@ composer test
 - [Google Cloud text embeddings](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/embeddings/get-text-embeddings)
 - [Google Cloud OpenAI-compatible examples](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/migrate/openai/examples)
 - [Google Cloud thinking](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/thinking)
+- [Google Cloud audio understanding](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/capabilities/audio-understanding)
 - [Core Package](https://github.com/phpaisdk/core)
