@@ -24,7 +24,7 @@ it('transcribes through the Agent Platform multimodal model path', function () {
     GoogleAgentPlatform::create(['apiKey' => 'google-test', 'baseUrl' => 'https://agent.example/v1beta1']);
 
     $result = Generate::transcription(Content::audio('wav-bytes', 'audio/wav', 'clip.wav'))
-        ->model(GoogleAgentPlatform::transcription('google/gemini-2.5-flash'))
+        ->model(GoogleAgentPlatform::model('google/gemini-2.5-flash'))
         ->run();
 
     $body = $client->sentBody();

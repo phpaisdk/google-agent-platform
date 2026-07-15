@@ -44,7 +44,7 @@ it('generates embeddings through the documented native predict endpoint', functi
     ]);
 
     $result = Generate::embedding(['First document', 'Second document'])
-        ->model(GoogleAgentPlatform::embedding('google/gemini-embedding-001'))
+        ->model(GoogleAgentPlatform::model('google/gemini-embedding-001'))
         ->dimensions(768)
         ->providerOptions('google-agent-platform', [
             'task_type' => 'RETRIEVAL_DOCUMENT',
@@ -93,6 +93,6 @@ it('requires project configuration for native embeddings', function () {
     ]);
 
     Generate::embedding('A document')
-        ->model(GoogleAgentPlatform::embedding('gemini-embedding-001'))
+        ->model(GoogleAgentPlatform::model('gemini-embedding-001'))
         ->run();
 })->throws(\AiSdk\Exceptions\InvalidArgumentException::class, 'Native Google Agent Platform embedding generation requires project configuration.');

@@ -33,7 +33,7 @@ it('generates images through the native publisher model endpoint', function () {
     configureGapMediaWith($client);
 
     $result = Generate::image('A small robot')
-        ->model(GoogleAgentPlatform::image('google/gemini-3.1-flash-image'))
+        ->model(GoogleAgentPlatform::model('google/gemini-3.1-flash-image'))
         ->aspectRatio('16:9')
         ->run();
 
@@ -52,7 +52,7 @@ it('generates speech through the native publisher model endpoint', function () {
     configureGapMediaWith($client);
 
     $result = Generate::speech('Welcome')
-        ->model(GoogleAgentPlatform::speech('google/gemini-3.1-flash-tts-preview'))
+        ->model(GoogleAgentPlatform::model('google/gemini-3.1-flash-tts-preview'))
         ->voice('Kore')
         ->run();
 
@@ -70,7 +70,7 @@ it('maps portable 4K image sizes to the documented Google value', function () {
     configureGapMediaWith($client);
 
     Generate::image('A detailed landscape')
-        ->model(GoogleAgentPlatform::image('google/gemini-3.1-flash-image'))
+        ->model(GoogleAgentPlatform::model('google/gemini-3.1-flash-image'))
         ->size('4096x4096')
         ->run();
 

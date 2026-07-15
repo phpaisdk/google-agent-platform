@@ -149,4 +149,30 @@ final class GoogleAgentPlatformOptions
     {
         return $this->auth()->authHeaders($this->headers);
     }
+
+    public function liveWebSocketUrl(): string
+    {
+        $publisherBaseUrl = $this->publisherBaseUrl;
+        if ($publisherBaseUrl === null || ! preg_match('#^https://([^/]+)/v1/projects/[^/]+/locations/[^/]+/publishers/google/models$#', $publisherBaseUrl, $matches)) {
+            throw new InvalidArgumentException(
+                'Google Agent Platform Live requires project and location configuration.',
+                ['provider' => self::PROVIDER_NAME],
+            );
+        }
+
+        return 'wss://' . $matches[1] . '/ws/google.cloud.aiplatform.v1.LlmBidiService/BidiGenerateContent';
+    }
+
+    public function liveModelName(string $modelId): string
+    {
+        $publisherBaseUrl = $this->publisherBaseUrl;
+        if ($publisherBaseUrl === null || ! preg_match('#/v1/(projects/[^/]+/locations/[^/]+/publishers/google/models)$#', $publisherBaseUrl, $matches)) {
+            throw new InvalidArgumentException(
+                'Google Agent Platform Live requires project and location configuration.',
+                ['provider' => self::PROVIDER_NAME],
+            );
+        }
+
+        return $matches[1] . '/' . $modelId;
+    }
 }

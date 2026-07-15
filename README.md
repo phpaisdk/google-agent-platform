@@ -26,7 +26,7 @@ echo $result->text;
 
 ```php
 $embedding = Generate::embedding(['First document to index', 'Second document to index'])
-    ->model(GoogleAgentPlatform::embedding('gemini-embedding-001'))
+    ->model(GoogleAgentPlatform::model('gemini-embedding-001'))
     ->dimensions(768)
     ->providerOptions('google-agent-platform', [
         'task_type' => 'RETRIEVAL_DOCUMENT',
@@ -45,12 +45,12 @@ Publisher and routed model IDs pass through unchanged and do not need to be regi
 
 ```php
 $image = Generate::image('A clean product photograph')
-    ->model(GoogleAgentPlatform::image('google/gemini-3.1-flash-image'))
+    ->model(GoogleAgentPlatform::model('google/gemini-3.1-flash-image'))
     ->aspectRatio('16:9')
     ->run();
 
 $speech = Generate::speech('Welcome to the application.')
-    ->model(GoogleAgentPlatform::speech('google/gemini-3.1-flash-tts-preview'))
+    ->model(GoogleAgentPlatform::model('google/gemini-3.1-flash-tts-preview'))
     ->voice('Kore')
     ->run();
 ```
@@ -65,7 +65,7 @@ use AiSdk\Generate;
 use AiSdk\GoogleAgentPlatform;
 
 $result = Generate::transcription(Content::audio(__DIR__.'/meeting.mp3'))
-    ->model(GoogleAgentPlatform::transcription('google/gemini-2.5-flash'))
+    ->model(GoogleAgentPlatform::model('google/gemini-2.5-flash'))
     ->run();
 
 echo $result->output->text;
@@ -73,25 +73,108 @@ echo $result->output->text;
 
 Transcription uses the routed multimodal model endpoint, so it follows the same authentication and model-id rules as text generation.
 
-## Streaming
+## Live voice sessions
 
-## Video Generation
+Install the optional transport package for a ready-made WebSocket connection:
 
-```php
-$result = Generate::video('A cinematic ocean scene')
-    ->model(GoogleAgentPlatform::video('veo-3.1-generate-001'))
-    ->aspectRatio('16:9')
-    ->resolution('1920x1080')
-    ->run(timeout: 600);
+```bash
+composer require aisdk/transport
 ```
 
-Veo operations use the native publisher-model endpoint and can return inline video bytes or a Cloud Storage URI.
+```php
+use AiSdk\GoogleAgentPlatform;
+use AiSdk\Live;
+use AiSdk\Live\AudioDelta;
+use AiSdk\Live\TranscriptDelta;
+use AiSdk\Transport;
+
+$session = Live::voice()
+    ->model(GoogleAgentPlatform::model('gemini-live-2.5-flash-native-audio'))
+    ->instructions('You are a concise customer-support agent.')
+    ->voice('Kore')
+    ->language('en-US')
+    ->connect(Transport::auto());
+
+// Send 16 kHz mono PCM chunks while reading events concurrently.
+$session->sendAudio($pcmBytes);
+
+foreach ($session->events() as $event) {
+    if ($event instanceof AudioDelta) {
+        playAudio($event->bytes);
+    }
+
+    if ($event instanceof TranscriptDelta) {
+        echo $event->delta;
+    }
+}
+```
+
+Core automatically runs registered tools that have handlers and sends the
+provider's required function response. Tool calls without a matching handler
+are emitted for manual handling.
+
+Provider-only setup fields can be merged without adding them to core. For
+example, a previously received session-resumption handle can be supplied with:
+
+```php
+->providerOptions('google-agent-platform', [
+    'raw' => ['session_resumption' => ['handle' => $resumeHandle]],
+])
+```
+
+Resumption updates and unknown native messages are preserved as `ProviderEvent`
+values.
+
+Agent Platform Live sessions can emit input and output transcripts, but this
+package does not claim dedicated `Live::transcribe()` or `Live::translate()`
+implementations. Google Cloud Speech-to-Text streaming is a separate gRPC
+service, and Gemini Developer API Live Translate's `translationConfig` protocol
+is not documented for the Agent Platform endpoint.
+
+### Core-only transport
+
+The provider is fully usable without `aisdk/transport`. Pass any application
+implementation of the core transport contracts:
+
+```php
+$session = Live::voice()
+    ->model(GoogleAgentPlatform::model('gemini-live-2.5-flash-native-audio'))
+    ->connect($appWebSocketTransport);
+```
+
+See the [core custom-transport guide](https://github.com/phpaisdk/core#core-without-aisdktransport)
+for a complete implementation. The connection receives the current native v1
+Agent Platform WebSocket endpoint and OAuth, ADC, or API-key headers prepared by
+this package.
+
+Agent Platform's native Live WebSocket streams media directly. With the default
+server-side activity detection, speech boundaries are detected automatically
+and the protocol does not document a separate audio commit event. When turn
+detection is disabled, `commitAudio()` sends the documented manual
+activity-end signal. `clearAudio()` remains unsupported because the protocol
+has no input buffer.
+It also does not expose the client-secret, WebRTC, or SIP lifecycle implemented
+by providers that officially support those topologies.
+
+## Streaming
 
 ```php
 foreach (Generate::text('Tell me a story.')->model(GoogleAgentPlatform::model('google/gemini-2.5-flash'))->stream()->chunks() as $chunk) {
     echo $chunk;
 }
 ```
+
+## Video Generation
+
+```php
+$result = Generate::video('A cinematic ocean scene')
+    ->model(GoogleAgentPlatform::model('veo-3.1-generate-001'))
+    ->aspectRatio('16:9')
+    ->resolution('1920x1080')
+    ->run(timeout: 600);
+```
+
+Veo operations use the native publisher-model endpoint and can return inline video bytes or a Cloud Storage URI.
 
 ## Reasoning and multimodal input
 
@@ -157,10 +240,16 @@ GoogleAgentPlatform::create(['project' => 'my-project', 'accessToken' => 'ya29..
 composer test
 ```
 
+The default suite uses protocol fixtures and conformance checks. Credentialed
+Live network verification is separate from the default test run.
+
 ## Links
 
 - [Google Cloud text embeddings](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/embeddings/get-text-embeddings)
 - [Google Cloud OpenAI-compatible examples](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/migrate/openai/examples)
 - [Google Cloud thinking](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/thinking)
 - [Google Cloud audio understanding](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/capabilities/audio-understanding)
+- [Agent Platform Live API reference](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/models/multimodal-live)
+- [Start and manage a Live session](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/live-api/start-manage-session)
+- [Send Live audio and video streams](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/live-api/send-audio-video-streams)
 - [Core Package](https://github.com/phpaisdk/core)
