@@ -251,13 +251,13 @@ composer test
 The default suite uses protocol fixtures and conformance checks. Credentialed
 Live network verification is separate from the default test run.
 
-## Links
+## Documentation
 
-- [Google Cloud text embeddings](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/embeddings/get-text-embeddings)
-- [Google Cloud OpenAI-compatible examples](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/migrate/openai/examples)
-- [Google Cloud thinking](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/thinking)
-- [Google Cloud audio understanding](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/capabilities/audio-understanding)
-- [Agent Platform Live API reference](https://docs.cloud.google.com/gemini-enterprise-agent-platform/reference/models/multimodal-live)
-- [Start and manage a Live session](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/live-api/start-manage-session)
-- [Send Live audio and video streams](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/live-api/send-audio-video-streams)
-- [Core Package](https://github.com/phpaisdk/core)
+- [PHP AI SDK documentation](https://phpaisdk.com/docs)
+- [Google Agent Platform documentation](https://phpaisdk.com/docs/google-agent-platform)
+
+## Community
+
+- [Contributing](https://github.com/phpaisdk/.github/blob/main/CONTRIBUTING.md)
+- [Support](https://github.com/phpaisdk/.github/blob/main/SUPPORT.md)
+- For private security reports, email [security@phpaisdk.com](mailto:security@phpaisdk.com).
