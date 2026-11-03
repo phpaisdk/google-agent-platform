@@ -1,14 +1,6 @@
-# aisdk/google-agent-platform
+# PHP AI SDK — Google Cloud Agent Platform
 
-<a href="https://github.com/phpaisdk/google-agent-platform/actions"><img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/phpaisdk/google-agent-platform/tests.yml?branch=main&label=Tests"></a>
-<a href="https://packagist.org/packages/aisdk/google-agent-platform"><img alt="Total Downloads" src="https://img.shields.io/packagist/dt/aisdk/google-agent-platform"></a>
-<a href="https://packagist.org/packages/aisdk/google-agent-platform"><img alt="Latest Version" src="https://img.shields.io/packagist/v/aisdk/google-agent-platform"></a>
-<a href="https://packagist.org/packages/aisdk/google-agent-platform"><img alt="License" src="https://img.shields.io/packagist/l/aisdk/google-agent-platform"></a>
-<a href="https://whyphp.dev"><img src="https://img.shields.io/badge/Why_PHP-in_2026-7A86E8?style=flat-square&labelColor=18181b" alt="Why PHP in 2026"></a>
-
-------
-
-Official Google Cloud Agent Platform provider for the framework-agnostic PHP AI SDK. It uses the OpenAI-compatible endpoint for text and transcription, and native publisher model endpoints for embeddings, image, and speech generation.
+Google Cloud Agent Platform (formerly Vertex AI) provider for the framework-agnostic [PHP AI SDK](https://phpaisdk.com). Supports text, images, speech, embeddings, video, and live sessions.
 
 ## Installation
 
@@ -16,248 +8,29 @@ Official Google Cloud Agent Platform provider for the framework-agnostic PHP AI 
 composer require aisdk/google-agent-platform
 ```
 
-## Basic Usage
+Set `GOOGLE_VERTEX_PROJECT`, `GOOGLE_VERTEX_LOCATION`, and `GOOGLE_VERTEX_ACCESS_TOKEN` in your environment. Service account credentials are also supported.
+
+## Usage
 
 ```php
 use AiSdk\Generate;
 use AiSdk\GoogleAgentPlatform;
 
-$result = Generate::text()
-    ->model(GoogleAgentPlatform::model('google/gemini-2.5-flash'))
-    ->prompt('Explain closures in PHP.')
+$result = Generate::text('Explain closures in PHP in one sentence.')
+    ->model(GoogleAgentPlatform::model('google/gemini-3.8-flash'))
     ->run();
 
 echo $result->text;
 ```
 
-## Embeddings
-
-```php
-$embedding = Generate::embedding(['First document to index', 'Second document to index'])
-    ->model(GoogleAgentPlatform::model('gemini-embedding-001'))
-    ->dimensions(768)
-    ->providerOptions('google-agent-platform', [
-        'task_type' => 'RETRIEVAL_DOCUMENT',
-        'autoTruncate' => false,
-    ])
-    ->run();
-
-$vector = $embedding->output->vector;
-```
-
-The package sends one native publisher-model request per input, which supports the documented single-input limit of `gemini-embedding-001`. Provider options use Google's documented field names: `task_type`, `title`, `autoTruncate`, and `outputDimensionality`.
-
-Publisher and routed model IDs pass through unchanged and do not need to be registered. This package does not ship a model inventory; the SDK performs internal adapter validation before Google Cloud validates support for the selected model, project, and location.
-
-## Image and speech generation
-
-```php
-$image = Generate::image('A clean product photograph')
-    ->model(GoogleAgentPlatform::model('google/gemini-3.1-flash-image'))
-    ->aspectRatio('16:9')
-    ->run();
-
-$speech = Generate::speech('Welcome to the application.')
-    ->model(GoogleAgentPlatform::model('google/gemini-3.1-flash-tts-preview'))
-    ->voice('Kore')
-    ->run();
-```
-
-Native embedding, image, and speech generation require `project`; a custom OpenAI-compatible `baseUrl` alone is not enough to construct the publisher model endpoint.
-
-## Transcription
-
-```php
-use AiSdk\Content;
-use AiSdk\Generate;
-use AiSdk\GoogleAgentPlatform;
-
-$result = Generate::transcription(Content::audio(__DIR__.'/meeting.mp3'))
-    ->model(GoogleAgentPlatform::model('google/gemini-2.5-flash'))
-    ->run();
-
-echo $result->output->text;
-```
-
-Transcription uses the routed multimodal model endpoint, so it follows the same authentication and model-id rules as text generation.
-
-## Live voice sessions
-
-Install the optional transport package for a ready-made WebSocket connection:
-
-```bash
-composer require aisdk/transport
-```
-
-```php
-use AiSdk\GoogleAgentPlatform;
-use AiSdk\Live;
-use AiSdk\Live\AudioDelta;
-use AiSdk\Live\TranscriptDelta;
-use AiSdk\Transport;
-
-$session = Live::voice()
-    ->model(GoogleAgentPlatform::model('gemini-live-2.5-flash-native-audio'))
-    ->instructions('You are a concise customer-support agent.')
-    ->voice('Kore')
-    ->language('en-US')
-    ->connect(Transport::auto());
-
-// Send 16 kHz mono PCM chunks while reading events concurrently.
-$session->sendAudio($pcmBytes);
-
-foreach ($session->events() as $event) {
-    if ($event instanceof AudioDelta) {
-        playAudio($event->bytes);
-    }
-
-    if ($event instanceof TranscriptDelta) {
-        echo $event->delta;
-    }
-}
-```
-
-Core automatically runs registered tools that have handlers and sends the
-provider's required function response. Tool calls without a matching handler
-are emitted for manual handling.
-
-Provider-only setup fields can be merged without adding them to core. For
-example, a previously received session-resumption handle can be supplied with:
-
-```php
-->providerOptions('google-agent-platform', [
-    'raw' => ['session_resumption' => ['handle' => $resumeHandle]],
-])
-```
-
-Resumption updates and unknown native messages are preserved as `ProviderEvent`
-values.
-
-Agent Platform Live sessions can emit input and output transcripts, but this
-package does not claim dedicated `Live::transcribe()` or `Live::translate()`
-implementations. Google Cloud Speech-to-Text streaming is a separate gRPC
-service, and Gemini Developer API Live Translate's `translationConfig` protocol
-is not documented for the Agent Platform endpoint.
-
-### Core-only transport
-
-The provider is fully usable without `aisdk/transport`. Pass any application
-implementation of the core transport contracts:
-
-```php
-$session = Live::voice()
-    ->model(GoogleAgentPlatform::model('gemini-live-2.5-flash-native-audio'))
-    ->connect($appWebSocketTransport);
-```
-
-See the [core custom-transport guide](https://github.com/phpaisdk/core#core-without-aisdktransport)
-for a complete implementation. The connection receives the current native v1
-Agent Platform WebSocket endpoint and OAuth, ADC, or API-key headers prepared by
-this package.
-
-Agent Platform's native Live WebSocket streams media directly. With the default
-server-side activity detection, speech boundaries are detected automatically
-and the protocol does not document a separate audio commit event. When turn
-detection is disabled, `commitAudio()` sends the documented manual
-activity-end signal. `clearAudio()` remains unsupported because the protocol
-has no input buffer.
-It also does not expose the client-secret, WebRTC, or SIP lifecycle implemented
-by providers that officially support those topologies.
-
-## Streaming
-
-```php
-foreach (Generate::text('Tell me a story.')->model(GoogleAgentPlatform::model('google/gemini-2.5-flash'))->stream()->chunks() as $chunk) {
-    echo $chunk;
-}
-```
-
-## Video Generation
-
-```php
-$result = Generate::video('A cinematic ocean scene')
-    ->model(GoogleAgentPlatform::model('veo-3.1-generate-001'))
-    ->aspectRatio('16:9')
-    ->resolution('1920x1080')
-    ->run(timeout: 600);
-```
-
-Veo operations use the native publisher-model endpoint and can return inline video bytes or a Cloud Storage URI.
-
-## Reasoning and multimodal input
-
-Portable reasoning maps to Google's native thinking configuration. Effort levels become `thinking_level`, while token budgets become `thinking_budget`:
-
-```php
-$result = Generate::text('Explain the tradeoff.')
-    ->model(GoogleAgentPlatform::model('google/gemini-3.1-pro-preview'))
-    ->reasoning(\AiSdk\Reasoning::effort('medium'))
-    ->run();
-```
-
-Google-specific `extra_body.google.thinking_config` provider options take precedence when supplied explicitly. Text requests also accept documented image and audio inputs; audio formats are serialized using Google's MIME-style values such as `audio/wav`.
-
-## Configuration
-
-| Variable | Description |
-|---|---|
-| `GOOGLE_CLOUD_PROJECT` / `GOOGLE_VERTEX_PROJECT` | Google Cloud project id (required unless `baseUrl` set) |
-| `GOOGLE_CLOUD_LOCATION` / `GOOGLE_VERTEX_LOCATION` | Region (defaults to `global`) |
-| `GOOGLE_VERTEX_ACCESS_TOKEN` | Static OAuth access token |
-| `GOOGLE_VERTEX_CREDENTIALS_PATH` | Path to a service account JSON key |
-| `GOOGLE_APPLICATION_CREDENTIALS` | Standard ADC service-account path |
-| `GOOGLE_VERTEX_API_KEY` | API key (express mode) |
-
-## Authentication
-
-Authentication is powered by the official [`google/auth`](https://github.com/googleapis/google-auth-library-php)
-library and supports the full set of Google credential sources:
-
-- **Application Default Credentials (ADC)** — used automatically when no
-  explicit credential is given: `GOOGLE_APPLICATION_CREDENTIALS`, `gcloud`
-  user credentials, GCE/GKE metadata server, and workload identity federation.
-- **Service account** — JSON key as an array or file path (OAuth token exchange
-  handled for you).
-- **Static OAuth access token** — bring your own (e.g. `gcloud auth print-access-token`).
-- **API key** — express mode via the `x-goog-api-key` header.
-
-```php
-// Application Default Credentials (nothing to configure)
-GoogleAgentPlatform::create(['project' => 'my-project', 'location' => 'us-central1']);
-
-// Service account file
-GoogleAgentPlatform::create([
-    'project' => 'my-project',
-    'location' => 'us-central1',
-    'credentialsPath' => '/path/to/service-account.json',
-]);
-
-// Service account array
-GoogleAgentPlatform::create([
-    'project' => 'my-project',
-    'credentials' => $decodedServiceAccountJson,
-]);
-
-// Static access token
-GoogleAgentPlatform::create(['project' => 'my-project', 'accessToken' => 'ya29....']);
-```
-
-## Testing
-
-```bash
-composer test
-```
-
-The default suite uses protocol fixtures and conformance checks. Credentialed
-Live network verification is separate from the default test run.
+The existing `GOOGLE_VERTEX_*` environment names remain supported.
 
 ## Documentation
 
-- [PHP AI SDK documentation](https://phpaisdk.com/docs)
-- [Google Agent Platform documentation](https://phpaisdk.com/docs/google-agent-platform)
+[Read the documentation](https://phpaisdk.com/docs/0.x/providers/google-agent-platform) for configuration, supported features, and more examples.
 
-## Community
+[Contributing](https://github.com/phpaisdk/.github/blob/main/CONTRIBUTING.md) · [Support](https://github.com/phpaisdk/.github/blob/main/SUPPORT.md)
 
-- [Contributing](https://github.com/phpaisdk/.github/blob/main/CONTRIBUTING.md)
-- [Support](https://github.com/phpaisdk/.github/blob/main/SUPPORT.md)
-- For private security reports, email [security@phpaisdk.com](mailto:security@phpaisdk.com).
+## License
+
+The MIT License (MIT). See [LICENSE](LICENSE) for details.
